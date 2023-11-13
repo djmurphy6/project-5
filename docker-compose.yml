@@ -2,7 +2,14 @@ version: '3'
 
 services:
     brevets:
-        build: brevets/.
-        command: python flask_brevets.py
+        build:
+          context: ./brevets
+          dockerfile: Dockerfile
         ports: 
           - "5001:5000"
+        depends_on:
+          - mongo
+        volumes:
+          - ./brevets/:/app
+    mongo:
+      image: 427dd68dd642

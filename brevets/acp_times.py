@@ -68,7 +68,11 @@ def close_time(control_dist_km, brevet_dist_km, brevet_start_time):
       
     if num < 60:
        sum = (num/20) + 1
-    else:
+    else:                           # handle special closing times for 200 & 400 km
+      if brevet_dist_km == 200 and num == brevet_dist_km:
+         return close.shift(hours =+ 13, minutes =+ 30)
+      if brevet_dist_km == 400 and num == brevet_dist_km:
+         return close.shift(hours =+ 27)
       if num > 600 and num <= 1000:
          sum += ((num-600)/11.428)
          num = 600
