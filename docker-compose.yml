@@ -9,7 +9,11 @@ services:
           - "5001:5000"
         depends_on:
           - mongo
+        environment:
+            MONGODB_HOSTNAME: mongo
         volumes:
           - ./brevets/:/app
     mongo:
       image: 427dd68dd642
+      ports:
+        - "27017:27017"

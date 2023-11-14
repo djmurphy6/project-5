@@ -4,13 +4,18 @@ Replacement for RUSA ACP brevet time calculator
 
 """
 
-import flask
+import flask, os, pymongo
 from flask import request
 import arrow  # Replacement for datetime, based on moment.js
 import acp_times  # Brevet time calculations
 import config
+from pymongo import MongoClient
 
 import logging
+
+# create mongo client
+client = MongoClient('mongodb://' + os.environ['MONGODB_HOSTNAME'], 27017)
+db = client.brevets
 
 ###
 # Globals
@@ -27,7 +32,8 @@ CONFIG = config.configuration()
 @app.route("/index")
 def index():
     app.logger.debug("Main page entry")
-    return flask.render_template('calc.html')
+    return flask.render_template('calc.html', 
+                    items=list(db.controls.find()))
 
 
 @app.errorhandler(404)
@@ -74,6 +80,45 @@ def _calc_times():
     result = {"open": open_time, "close": close_time}
     return flask.jsonify(result=result)
 
+@app.route("/submit", methods=["POST"])
+def submit():
+    # Get the JSON data from the request
+    data = request.get_json()
+    
+
+    # Extract data from the JSON data
+    brevet_distance = data.get('brevetDistance')
+    # app.logger.debug("brevet_distance={}".format(brevet_distance))
+    begin_date = data.get('beginDate')
+    # app.logger.debug("begin_date={}".format(begin_date))
+    controls = data.get('tableData', [])
+    # app.logger.debug("controls={}".format(controls))
+
+    # Create a MongoDB document
+    document = {
+        "brevet_distance": brevet_distance,
+        "begin_date": begin_date,
+        "controls": controls
+    }
+
+    # Insert the document into the MongoDB collection
+    db.controls.insert_one(document)
+
+    return "Data submitted successfully"
+
+@app.route("/display")
+def display():
+    # Fetch most recent document from the MongoDB collection
+    mr_doc = db.controls.find_one(sort=[('_id', pymongo.DESCENDING)])
+
+    # Convert ObjectId to string
+    mr_doc['_id'] = str(mr_doc['_id'])
+    
+    # Log the fetched data
+    app.logger.debug("Data: {}".format(mr_doc))
+
+    # Return the data as JSON
+    return flask.jsonify(result=mr_doc)
 
 #############
 

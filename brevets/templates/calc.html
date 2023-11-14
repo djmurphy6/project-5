@@ -65,9 +65,11 @@
                <div class="col-md-6">
                   <label>Begins at</label>
                   <input type="datetime-local" name="begin_date" id="begin_date" value="2021-01-01T00:00" />
+                  <body> &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp </body>
+                  <button type="button" onclick="submitClick()">Submit</button>
+                  <button type="button" onclick="displayClick()">Display</button>
                </div>
                <!-- columns 5 to 10 -->
-            </div>
             <!-- row -->
             <br />  <!-- a little vertical space -->
             <!-- Although we do not use tables for general page layout, they are
@@ -114,11 +116,100 @@
          <script type="text/javascript">
             var SCRIPT_ROOT = {{ request.script_root|tojson|safe }} ;
             var TIME_CALC_URL = SCRIPT_ROOT + "/_calc_times";
+            
 
-            // FIX ME!
-            // Right now, only the kilometers are passed
-            // you need to pass much more!
-            // View flask_brevets.py for details.
+            function submitClick() {
+               console.log("clicked submit button");
+
+               // Get values for brevet distance and begin date
+               var brevetDistance = $("#brevet_dist_km").val();
+               var beginDate = $("#begin_date").val();
+
+               // Array to store data for each row
+               var tableData = [];
+
+               // Loop through each row in the table
+               $(".control_time_table tbody tr").each(function() {
+                  var row = $(this);
+                  
+                  // Get values from the current row
+                  var miles = row.find("input[name='miles']").val();
+                  var km = row.find("input[name='km']").val();
+                  var location = row.find("input[name='location']").val();
+                  var open = row.find("input[name='open']").val();
+                  var close = row.find("input[name='close']").val();
+
+                  // Create an object with the row data
+                  var rowData = {
+                     miles: miles,
+                     kilometers: km,
+                     location: location,
+                     openTime: open,
+                     closeTime: close
+                  };
+
+               // Add the row data to the array
+               tableData.push(rowData);
+               });
+
+               var fullDoc = {
+                  brevetDistance: brevetDistance,
+                  beginDate: beginDate,
+                  tableData: tableData
+               }
+
+               // Log the collected data
+               console.log("Doc", fullDoc);
+               
+               $.ajax({
+                  url: '/submit',
+                  type: 'POST',
+                  contentType: 'application/json',
+                  data: JSON.stringify(fullDoc),
+                  success: function (response) {
+                     console.log("Data submitted successfully");
+                     // Optionally, you can handle the response from the server here
+                  },
+                  error: function (error) {
+                     console.error("Error submitting data:", error);
+                  }
+               });
+
+
+               // Clear input fields in the table
+               $(".control_time_table input[type='number']").val('');
+               $(".control_time_table input[type='text']").val('');
+               $(".control_time_table input[type='datetime-local']").val('');
+            }
+
+            function displayClick(data) {
+               console.log("clicked display button");
+               $.getJSON("/display", 
+                  function(data) {
+                     console.log("in function")
+                     var dataTable = data.result;
+
+                     var controls = dataTable.controls;
+
+                     // Loop through each control in the array
+                     for (var i = 0; i < controls.length; i++) {
+                           var controlData = controls[i];
+
+                           // Find the corresponding row in the table
+                           var row = $(".control_time_table tbody tr").eq(i);
+
+                           // Update input values in the row with controlData
+                           row.find("input[name='miles']").val(controlData.miles || '');
+                           row.find("input[name='km']").val(controlData.kilometers || '');
+                           row.find("input[name='location']").val(controlData.location || '');
+                           row.find("input[name='open']").val(controlData.openTime || '');
+                           row.find("input[name='close']").val(controlData.closeTime || '');
+                     }
+                  }
+               )
+            }
+
+
             function calc_times(control) {
                var dist = $("#brevet_dist_km").val();
                console.log("dist = " + dist)
