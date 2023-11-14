@@ -31,6 +31,7 @@
    <body>
       <div class="container">
          <h1>ACP Brevet Times</h1>
+         <div id="error-message" style="color: red;"></div>
          <p>This worksheet is for ACP-sanctioned brevets between 200 and 1000 kilometers.</p>
          <!--
             If there are any warnings or other messages from a prior
@@ -117,13 +118,23 @@
             var SCRIPT_ROOT = {{ request.script_root|tojson|safe }} ;
             var TIME_CALC_URL = SCRIPT_ROOT + "/_calc_times";
             
+            function displayError(message) {
+               // Display the error message to the user
+               $("#error-message").text(message);
+               // clear after 5 seconds
+               setTimeout(function() {
+                  $("#error-message").text('');
+               }, 5000);
+            }
+
 
             function submitClick() {
-               console.log("clicked submit button");
-
                // Get values for brevet distance and begin date
                var brevetDistance = $("#brevet_dist_km").val();
                var beginDate = $("#begin_date").val();
+
+               // counter varible to check if at least row is filled in
+               var eCounter = 0
 
                // Array to store data for each row
                var tableData = [];
@@ -139,6 +150,12 @@
                   var open = row.find("input[name='open']").val();
                   var close = row.find("input[name='close']").val();
 
+                  // conditional for empty row counter variable
+                  // if row is empty, counter + 1
+                  if (km == 0) {
+                     eCounter = eCounter + 1;
+                  }
+
                   // Create an object with the row data
                   var rowData = {
                      miles: miles,
@@ -151,6 +168,13 @@
                // Add the row data to the array
                tableData.push(rowData);
                });
+
+                // Check if there is at least one control time entered
+               if (eCounter === 20) {
+               console.error("At least one control distance must be entered.");
+               displayError("At least one control distance must be entered.");
+               return;
+               }
 
                var fullDoc = {
                   brevetDistance: brevetDistance,
@@ -168,7 +192,6 @@
                   data: JSON.stringify(fullDoc),
                   success: function (response) {
                      console.log("Data submitted successfully");
-                     // Optionally, you can handle the response from the server here
                   },
                   error: function (error) {
                      console.error("Error submitting data:", error);

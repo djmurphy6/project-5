@@ -59,5 +59,10 @@ def test_close_400():
     expected_close_time = start_time.shift(hours=26, minutes=40)
     assert close_time(400, 400, start_time) == expected_close_time
 
+def test_db():
+    
+
+
+
 if __name__ == '__main__':
     nose.run()
