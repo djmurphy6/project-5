@@ -203,16 +203,25 @@
                $(".control_time_table input[type='number']").val('');
                $(".control_time_table input[type='text']").val('');
                $(".control_time_table input[type='datetime-local']").val('');
+               $("#begin_date").val("2021-01-01T00:00");
+               $("#brevet_dist_km").val('200');
+
+
             }
 
             function displayClick(data) {
-               console.log("clicked display button");
                $.getJSON("/display", 
                   function(data) {
                      console.log("in function")
                      var dataTable = data.result;
 
                      var controls = dataTable.controls;
+
+                     console.log(dataTable.begin_date)
+                     console.log(dataTable.brevet_distance)
+
+                     $("#begin_date").val(dataTable.begin_date);
+                     $("#brevet_dist_km").val(dataTable.brevet_distance);
 
                      // Loop through each control in the array
                      for (var i = 0; i < controls.length; i++) {
