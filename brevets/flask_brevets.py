@@ -6,7 +6,6 @@ Replacement for RUSA ACP brevet time calculator
 
 import flask, os, pymongo
 from flask import request
-import arrow  # Replacement for datetime, based on moment.js
 import acp_times  # Brevet time calculations
 import config
 from pymongo import MongoClient
@@ -101,24 +100,39 @@ def submit():
         "controls": controls
     }
 
-    # Insert the document into the MongoDB collection
-    db.controls.insert_one(document)
-
-    return "Data submitted successfully"
+    #call db_insert to put data into database
+    db_insert(document)
+    
+    return "recieved and sent document to db_insert"
 
 @app.route("/display")
 def display():
-    # Fetch most recent document from the MongoDB collection
-    mr_doc = db.controls.find_one(sort=[('_id', pymongo.DESCENDING)])
-
-    # Convert ObjectId to string
-    mr_doc['_id'] = str(mr_doc['_id'])
+    # call db_fetch
+    # argument makes it fetch most recent
+    # sort=[('_id', pymongo.DESCENDING)]
+    data = db_fetch()
     
     # Log the fetched data
-    app.logger.debug("Data: {}".format(mr_doc))
+    app.logger.debug("Data: {}".format(data))
 
     # Return the data as JSON
-    return flask.jsonify(result=mr_doc)
+    return flask.jsonify(result=data)
+
+def db_insert(doc):
+    # Insert the document into the 'controls' collection in brevets
+    output = db.controls.insert_one(doc)
+    _id = output.inserted_id 
+    return str(_id)
+
+def db_fetch():
+    # fetch the brevet timing information from the 'controls' collection in brevetes
+    output = db.controls.find_one(sort=[('_id', pymongo.DESCENDING)])
+
+    # Convert ObjectId to string
+    if output:
+        output['_id'] = str(output['_id'])
+
+    return output
 
 #############
 
